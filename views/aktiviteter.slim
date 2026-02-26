@@ -1,0 +1,16 @@
+a href="/user/createaktivitet" ➕
+section class="aktivitetercontainer"
+      - @aktiviteter.each do |aktivitet|
+
+            section class="todo"
+
+                  h2 #{aktivitet["name"]}
+                  p #{aktivitet["description"]}
+
+                  /form action="/todos/#{todo["id"]}/done" method="post"
+                        input type="submit" value="✅ done"/
+
+                  /form action="/todos/#{todo["id"]}/delete" method="post"
+                        input type="submit" value="🔥delete"
+
+                  /a href="/todos/#{todo["id"]}/edit" edit
