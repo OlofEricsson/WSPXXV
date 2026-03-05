@@ -1,0 +1,6 @@
+h2 Uppdatera aktivitet
+
+form action="/user/aktiviteter/#{@special_aktivitet["id"]}/update" method="post"
+      input type="text" name="name" value="#{@special_aktivitet["name"]}"
+      input type="text" name="description" value="#{@special_aktivitet["description"]}"
+      input type="submit" value="Uppdatera"

@@ -10,7 +10,7 @@ section class="aktivitetercontainer"
                   /form action="/todos/#{todo["id"]}/done" method="post"
                         input type="submit" value="✅ done"/
 
-                  /form action="/todos/#{todo["id"]}/delete" method="post"
-                        input type="submit" value="🔥delete"
+                  form action="/user/aktiviteter/#{aktivitet["id"]}/delete" method="post"
+                        input type="submit" value="ta bort"
 
-                  /a href="/todos/#{todo["id"]}/edit" edit
+                  a href="/user/aktiviteter/#{aktivitet["id"]}/edit" edit🖊️
