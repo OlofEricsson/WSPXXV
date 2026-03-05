@@ -40,4 +40,4 @@ post("/user/skapa") do
   
   redirect("/user/aktiviteter")
 
-end 
+end
