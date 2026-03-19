@@ -1,0 +1,15 @@
+section
+
+      form action="/login" method="post"
+            input type="text" name="username" placeholder="Enter username"
+            input type="text" name="password" placeholder="Enter password"
+            input type="submit" value="Logga in"
+      
+      - p ("hej")
+      - p (@loginfail)
+      - if @loginfail == true
+            p style="color: red;" Fel användarnamn eller lösenord
+            form action="/userskapa" method="post"
+                  input type="text" name="username" placeholder="Enter username"
+                  input type="text" name="password" placeholder="Enter password"
+                  input type="submit" value="Skapa användare"

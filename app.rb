@@ -4,18 +4,50 @@ require 'sqlite3'
 require 'sinatra/reloader'
 require 'bcrypt'
 
+enable :sessions
+@loginfail = false
+
+
+
 get('/') do
+  @loginfail = false
   slim(:home)
 end
 
+get('/login') do
+  @loginfail
+  slim(:login)
+end
+
 post('/login') do
+  db = SQLite3::Database.new('databas.db')
+  db.results_as_hash = true
+
+  username = params[:username]
+  password = params[:password]
+  p username
+  p password
+
+  @user = db.execute("SELECT * FROM aktiva WHERE name = ?", username).first
+
+  if @user && @user["password"] == password
+    p "Inloggad!"
+    @loginfail = false
+    session[:user_id] = @user["id"]
+    redirect('/user/aktiviteter')
+  else
+    p "Wrong username or password"
+    @loginfail = true
+    p @loginfail
+    redirect('/login')
+  end
 
 end
 
 
 get('/user/aktiviteter') do
 
-  db = SQLite3::Database.new("databas.db")
+  db = SQLite3::Database.new('databas.db')
 
   db.results_as_hash = true
 
@@ -30,13 +62,13 @@ get('/user/createaktivitet') do
   slim(:skapa)
 end
 
-post("/user/skapa") do 
+post("/userskapa") do 
 
-  new_aktivtet = params[:new_aktivitet]
-  description = params[:description]
+  username = params[:username]
+  password = params[:password]
 
   db = SQLite3::Database.new('databas.db')
-  db.execute("INSERT INTO aktiviteter (name, description) VALUES (?,?)",[new_aktivtet,description])
+  db.execute("INSERT INTO aktiva (name, password) VALUES (?,?)",[username,password])
 
   redirect("/user/aktiviteter")
 
