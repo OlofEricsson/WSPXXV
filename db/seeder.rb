@@ -35,8 +35,7 @@ end
 
 def populate_tables(db)
   db.execute('INSERT INTO aktiviteter (name, description) VALUES ("Cykelträning", "Samling eklanda parkering 13:50")')
-  db.execute('INSERT INTO aktiva (name, password, trainer) VALUES ("Admin Admin", "admin",true)')
-  db.execute('INSERT INTO aktiva_aktiviteter_rel (aktiv_id, aktivitet-id) VALUES (1, 1)')
+  #db.execute('INSERT INTO aktiva_aktiviteter_rel (aktiv_id, aktivitet-id) VALUES (1, 1)')
 end
 
 

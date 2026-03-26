@@ -15,12 +15,13 @@ get('/') do
 end
 
 get('/login') do
-  @loginfail
+  @loginfail = session[:loginfail]
+  session[:loginfail] = nil
   slim(:login)
 end
 
 post('/login') do
-  db = SQLite3::Database.new('databas.db')
+  db = SQLite3::Database.new('db/databas.db')
   db.results_as_hash = true
 
   username = params[:username]
@@ -29,25 +30,28 @@ post('/login') do
   p password
 
   @user = db.execute("SELECT * FROM aktiva WHERE name = ?", username).first
-
-  if @user && @user["password"] == password
-    p "Inloggad!"
-    @loginfail = false
-    session[:user_id] = @user["id"]
-    redirect('/user/aktiviteter')
-  else
-    p "Wrong username or password"
-    @loginfail = true
-    p @loginfail
+  begin
+    if @user && BCrypt::Password.new(@user["password"]) == password
+      p "Inloggad!"
+      session[:loginfail] = false
+      session[:user_id] = @user["id"]
+      redirect('/user/aktiviteter')
+    else
+      p "Wrong username or password"
+      session[:loginfail] = true
+      p @loginfail
+      redirect('/login')
+    end
+  rescue BCrypt::Errors::InvalidHash
+    session[:loginfail] = true
     redirect('/login')
   end
-
 end
 
 
 get('/user/aktiviteter') do
 
-  db = SQLite3::Database.new('databas.db')
+  db = SQLite3::Database.new('db/databas.db')
 
   db.results_as_hash = true
 
@@ -66,9 +70,16 @@ post("/userskapa") do
 
   username = params[:username]
   password = params[:password]
+  if params[:trainer] == "on"
+    trainer = 1
+  else
+    trainer = 0
+  end
 
-  db = SQLite3::Database.new('databas.db')
-  db.execute("INSERT INTO aktiva (name, password) VALUES (?,?)",[username,password])
+  hashed_password = BCrypt::Password.create(password)
+
+  db = SQLite3::Database.new('db/databas.db')
+  db.execute("INSERT INTO aktiva (name, password, trainer) VALUES (?,?,?)",[username, hashed_password, trainer])
 
   redirect("/user/aktiviteter")
 
@@ -76,7 +87,7 @@ end
 
 get("/user/aktiviteter/:id/edit") do
 
-  db = SQLite3::Database.new('databas.db')
+  db = SQLite3::Database.new('db/databas.db')
   db.results_as_hash = true
   id = params[:id].to_i
   @special_aktivitet = db.execute("SELECT * FROM aktiviteter WHERE id = ?", id).first
@@ -91,7 +102,7 @@ post("/user/aktiviteter/:id/update") do
   name = params[:name]
   description = params[:description]
 
-  db = SQLite3::Database.new('databas.db')
+  db = SQLite3::Database.new('db/databas.db')
   db.execute("UPDATE aktiviteter SET name=?, description=? WHERE id=?",[name,description,id])
 
   redirect("/user/aktiviteter")
@@ -101,7 +112,7 @@ end
 post("/user/aktiviteter/:id/delete") do
 
   id = params[:id].to_i
-  db = SQLite3::Database.new('databas.db')
+  db = SQLite3::Database.new('db/databas.db')
 
   db.execute("DELETE FROM aktiviteter WHERE id = ?", id)
 

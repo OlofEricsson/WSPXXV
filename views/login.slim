@@ -2,7 +2,7 @@ section
 
       form action="/login" method="post"
             input type="text" name="username" placeholder="Enter username"
-            input type="text" name="password" placeholder="Enter password"
+            input type="password" name="password" placeholder="Enter password"
             input type="submit" value="Logga in"
       
       - p ("hej")
@@ -12,4 +12,6 @@ section
             form action="/userskapa" method="post"
                   input type="text" name="username" placeholder="Enter username"
                   input type="text" name="password" placeholder="Enter password"
+                  label for="trainer" trainer?
+                  input type="checkbox" name="trainer" label="trainer"
                   input type="submit" value="Skapa användare"
