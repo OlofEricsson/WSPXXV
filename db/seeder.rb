@@ -1,20 +1,14 @@
 require 'sqlite3'
 
-db = SQLite3::Database.new("databas.db")
+db = SQLite3::Database.new("db/databas.db")
 
 
 def seed!(db)
-  puts "🧹 Dropping old tables..."
-  drop_tables(db)
   puts "🧱 Creating tables..."
   create_tables(db)
   puts "🍎 Populating tables..."
   populate_tables(db)
   puts "✅ Done seeding the database!"
-end
-
-def drop_tables(db)
-  db.execute('DROP TABLE IF EXISTS exempel')
 end
 
 def create_tables(db)
@@ -27,15 +21,17 @@ def create_tables(db)
               name TEXT NOT NULL,
               password TEXT NOT NULL,
               trainer BOOLEAN)')
-  db.execute('CREATE TABLE aktiva_aktiviteter_rel (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              aktiv_id INTEGER,
-              aktivitet_id INTEGER)')
+  db.execute('CREATE TABLE relation (
+              aktiv_id INTEGER, 
+              aktivitet_id INTEGER, 
+              status TEXT DEFAULT "kallad",
+              PRIMARY KEY (aktiv_id, aktivitet_id), 
+              FOREIGN KEY (aktiv_id) REFERENCES aktiva(id) ON DELETE CASCADE, 
+              FOREIGN KEY (aktivitet_id) REFERENCES aktiviteter(id) ON DELETE CASCADE)')
 end
 
 def populate_tables(db)
-  db.execute('INSERT INTO aktiviteter (name, description) VALUES ("Cykelträning", "Samling eklanda parkering 13:50")')
-  #db.execute('INSERT INTO aktiva_aktiviteter_rel (aktiv_id, aktivitet-id) VALUES (1, 1)')
+  #db.execute('INSERT INTO aktiviteter (name, description) VALUES ("Cykelträning", "Samling eklanda parkering 13:50")')
 end
 
 

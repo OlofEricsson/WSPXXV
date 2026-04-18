@@ -8,8 +8,24 @@ html lang="en"
   body
 
     header 
-      h1 id="title" Aktivitetsportalen
+      section id="topbar"
+        a href="/" id="title" Aktivitetsportalen
+        - if @loginstatus == 'notloggedin' 
+          form class="user" action="/login" method="get"
+            input type="submit" value="Logga in"
+        - else
+          section class="menu-button"
+            h1 class="user material-icons" #{session[:username]['name'] + @trainer} ☰
+
+        nav class="menu"
+          hr
+          a href="/user/aktiviteter" class="navbar"Aktiviteter
+          a href="/user/profil" class="navbar"Profil
+          a href="" class="navbar"inställningar
+          a href="/logout" class="navbar"Logga ut
       hr
+
+    section class="fade-layer"
     
     section id="content"
       ==yield
@@ -18,3 +34,5 @@ html lang="en"
     footer
       h3 Fötter
       p contact:   bananalover@mail.com
+
+    script src="/script.js"

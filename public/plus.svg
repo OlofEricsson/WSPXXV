@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="button" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 160 160">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#linear-gradient-2);
+      }
+
+      .cls-2 {
+        fill: url(#linear-gradient);
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="9.44" y1="9.44" x2="150.56" y2="150.56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset=".18" stop-color="#f7f7f7"/>
+      <stop offset=".5" stop-color="#f7f7f7"/>
+      <stop offset=".87" stop-color="#f7f7f7"/>
+      <stop offset="1" stop-color="#efefef"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient-2" x1="115.06" y1="115.06" x2="44.94" y2="44.94" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9c9c9c"/>
+      <stop offset=".5" stop-color="gray"/>
+      <stop offset="1" stop-color="#646464"/>
+    </linearGradient>
+  </defs>
+  <g id="background">
+    <rect class="cls-2" width="160" height="160" rx="32.22" ry="32.22"/>
+  </g>
+  <path id="inset" class="cls-1" d="M135.19,66.62v26.76c0,2.07-1.68,3.75-3.75,3.75h-30.56c-2.07,0-3.75,1.68-3.75,3.75v30.56c0,2.07-1.68,3.75-3.75,3.75h-26.76c-2.07,0-3.75-1.68-3.75-3.75v-30.56c0-2.07-1.68-3.75-3.75-3.75h-30.56c-2.07,0-3.75-1.68-3.75-3.75v-26.76c0-2.07,1.68-3.75,3.75-3.75h30.56c2.07,0,3.75-1.68,3.75-3.75v-30.56c0-2.07,1.68-3.75,3.75-3.75h26.76c2.07,0,3.75,1.68,3.75,3.75v30.56c0,2.07,1.68,3.75,3.75,3.75h30.56c2.07,0,3.75,1.68,3.75,3.75Z"/>
+</svg>

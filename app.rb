@@ -7,11 +7,30 @@ require 'bcrypt'
 enable :sessions
 @loginfail = false
 
+before() do
+  db = SQLite3::Database.new('db/databas.db')
+  db.results_as_hash = true
+
+  if (session[:user_id] !=  nil)
+    session[:username] = db.execute("SELECT name FROM aktiva WHERE id = ?", session[:user_id]).first #User.get(id) 
+    session[:user_info] = db.execute("SELECT * FROM aktiva WHERE id = ?", session[:user_id]).first
+    @trainer_status = session[:user_info]['trainer']
+    p @trainer_status
+    if @trainer_status == 1
+      @trainer = "✅"
+    else
+      @trainer = ""
+    end
+  else
+    @loginstatus = 'notloggedin'
+  end
+end
+
 before('/user/*') do
   if (session[:user_id] ==  nil)
-   session[:error] = "You need to log in to see this"
-   redirect('/error')
- end
+    session[:error] = "You need to log in to see this"
+    redirect('/error')
+  end
 end
 
 get('/') do
@@ -62,12 +81,36 @@ get('/user/aktiviteter') do
 
   @aktiviteter = db.execute("SELECT * FROM aktiviteter")
 
-  p @aktiviteter
+  @trainer_status = session[:user_info]['trainer']
 
-  if db.execute("SELECT name FROM aktiva WHERE id = ?", session[:user_id]).first != nil
-    @current_user = db.execute("SELECT name FROM aktiva WHERE id = ?", session[:user_id]).first["name"]
-  else
-    @current_user = 'no user is logged in'
+  @kallade_per_aktivitet = {}
+  @frånvarande_per_aktivitet = {}
+  @kommer_per_aktivitet = {}
+
+  @aktiviteter.each do |aktivitet|
+    id = aktivitet["id"]
+
+    @kallade_per_aktivitet[id] = db.execute('
+                                            SELECT aktiva.name
+                                            FROM relation
+                                            JOIN aktiva ON relation.aktiv_id = aktiva.id
+                                            WHERE relation.status = "kallad"
+                                            AND relation.aktivitet_id = ?
+                                          ', id)
+    @frånvarande_per_aktivitet[id] = db.execute('
+                                            SELECT aktiva.name
+                                            FROM relation
+                                            JOIN aktiva ON relation.aktiv_id = aktiva.id
+                                            WHERE relation.status = "frånvarande"
+                                            AND relation.aktivitet_id = ?
+                                          ', id)
+    @kommer_per_aktivitet[id] = db.execute('
+                                            SELECT aktiva.name
+                                            FROM relation
+                                            JOIN aktiva ON relation.aktiv_id = aktiva.id
+                                            WHERE relation.status = "kommer"
+                                            AND relation.aktivitet_id = ?
+                                          ', id)
   end
 
   slim(:aktiviteter)
@@ -87,6 +130,78 @@ get("/user/aktiviteter/:id/edit") do
 
   slim(:edit)
 
+end
+
+get('/user/profil') do
+
+  db = SQLite3::Database.new('db/databas.db')
+  db.results_as_hash = true
+  username = session[:username]['name']
+  @user_info = db.execute("SELECT * FROM aktiva WHERE name = ?", username).first
+  p (@user_info)
+
+  slim(:profil)
+
+end
+
+get('/user/login/passwordchange') do
+  @loginfail = session[:loginfail]
+  session[:loginfail] = nil
+  slim(:passwordchange)
+end
+
+post('/user/login/passwordchange') do
+  db = SQLite3::Database.new('db/databas.db')
+  db.results_as_hash = true
+
+  username = params[:username]
+  password = params[:password]
+  p username
+  p password
+
+  @user = db.execute("SELECT * FROM aktiva WHERE name = ?", username).first
+  begin
+    if @user && BCrypt::Password.new(@user["password"]) == password
+      p "Inloggad!"
+      session[:loginfail] = false
+      redirect('/user/changepassword')
+    else #lägg till cooldown för inloggning
+      p "Wrong username or password"
+      session[:loginfail] = true
+      p @loginfail
+      redirect('/user/login/passwordchange')
+    end
+  rescue BCrypt::Errors::InvalidHash
+    session[:loginfail] = true
+    redirect('/user/login/passwordchange')
+  end
+end
+
+get('/user/changepassword') do
+  @confirmfail = session[:confirmnotsame]
+  session[:confirmnotsame] = nil
+  slim(:changepassword)
+end
+
+post('/user/changepassword') do
+  password = params[:password]
+
+  if password != params[:passwordconfirmation]
+    session[:confirmnotsame] = true
+  elsif password == params[:passwordconfirmation]
+    session[session[:confirmnotsame] = false]
+  end
+  hashed_password = BCrypt::Password.create(password)
+
+  db = SQLite3::Database.new('db/databas.db')
+  db.execute("UPDATE aktiva SET password =? WHERE name =?",[hashed_password, session[:username]['name']])
+
+  redirect("/user/profil")
+end
+
+get('/logout') do
+  session.clear
+  redirect('/')
 end
 
 get('/error') do
@@ -109,7 +224,19 @@ post("/userskapa") do
   hashed_password = BCrypt::Password.create(password)
 
   db = SQLite3::Database.new('db/databas.db')
+  db.results_as_hash = true
   db.execute("INSERT INTO aktiva (name, password, trainer) VALUES (?,?,?)",[username, hashed_password, trainer])
+
+  aktiv_id = db.last_insert_row_id
+
+  aktiviteter = db.execute("SELECT id FROM aktiviteter")
+
+  aktiviteter.each do |aktivitet|
+    db.execute(
+      "INSERT INTO relation (aktiv_id, aktivitet_id) VALUES (?,?)",
+      [aktiv_id, aktivitet["id"]]
+    )
+  end
 
   redirect("/user/aktiviteter")
 
@@ -136,4 +263,53 @@ post("/user/aktiviteter/:id/delete") do
   db.execute("DELETE FROM aktiviteter WHERE id = ?", id)
 
   redirect("/user/aktiviteter")
+end
+
+post('/user/createaktivitet') do
+  db = SQLite3::Database.new('db/databas.db')
+  db.results_as_hash = true
+
+  name = params[:new_aktivitet]
+  description = params[:description]
+  
+  db.execute("INSERT INTO aktiviteter (name, description) VALUES (?,?)", [name, description])
+
+  aktivitet_id = db.last_insert_row_id
+
+  aktiva = db.execute("SELECT id FROM aktiva")
+
+  aktiva.each do |aktiv|
+    db.execute(
+      "INSERT INTO relation (aktiv_id, aktivitet_id) VALUES (?,?)",
+      [aktiv["id"], aktivitet_id]
+    )
+  end
+
+  @kallade = db.execute('
+                        SELECT aktiva.name
+                        FROM relation
+                        JOIN aktiva ON relation.aktiv_id = aktiva.id
+                        WHERE relation.status = "kallad"
+                        AND relation.aktivitet_id = ?
+                      ', aktivitet_id)
+
+  redirect("/user/aktiviteter")
+
+end
+
+post("/user/aktiviteter/:id/changenärvaro") do
+
+  id = params[:id].to_i
+  status = params[:status]
+  aktiv_id = session[:user_id]
+  p aktiv_id
+
+  db = SQLite3::Database.new('db/databas.db' )
+  db.execute(
+    "UPDATE relation SET status = ? WHERE aktiv_id = ? AND aktivitet_id = ?",
+    [status, aktiv_id, id]
+  )
+
+  redirect("/user/aktiviteter")
+
 end

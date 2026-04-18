@@ -3,26 +3,316 @@ body {
       height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
       margin: 0px;
+      background-color: rgb(247, 247, 247);
 
 }
 
 header {
 
       padding: 2rem;
+      padding-bottom: 0px;
+      background: linear-gradient(90deg, rgba(247, 247, 247, 1) 0%, rgba(255, 255, 255, 1) 50%, rgba(247, 247, 247, 1) 100%);
 
+}
+
+#topbar {
+
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+
+}
+
+#title {
+
+      font-size: xx-large;
+      color: black;
+      text-decoration: none;
+
+}
+
+.user {
+
+      align-self: end;
+      margin-left: auto;
+      margin-bottom: 0px;
+      margin-top: 0px;
+      font-weight: 100;
+
+}
+
+/* hambgörgar meny */
+/* Kod baserat på exempel från tidigare i kursen */
+.menu {
+      height: 100vh;
+      width: 30vw;
+      background: rgb(255, 255, 255);
+      position: fixed;
+      top: 0;
+      right: -90vw;
+      transition: Right 0.3s;
+      box-shadow: 10px 0px 21px -10px rgba(0, 0, 0, 0.75);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: flex-start;
+}
+
+.navbar {
+
+      width: 100%;
+      color: black;
+      text-decoration: none;
+      font-size: xx-large;
+      margin-left: 1rem;
+      padding: 1rem;
+
+}
+
+.navbar:hover {
+
+      background-color: rgb(247, 247, 247);
+
+}
+
+.menu-button {
+      cursor: pointer;
+      align-self: end;
+      margin-right: 1rem;
+      margin-bottom: 0.5rem;
+}
+
+.menu-button i.material-icons {
+      font-size: 2.5rem;
+}
+
+.show {
+      right: 0;
+}
+
+.fade-layer {
+      position: fixed;
+      transition: 0.3s;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      backdrop-filter: blur(0.2rem);
+      display: none;
+      z-index: 5;
+}
+
+.fade-layer.visible {
+      display: block;
 }
 
 #content {
 
-      align-self: center;
+      height: max-content;
+      justify-self: center;
+      background-color: white;
+      padding-top: auto;
+      margin-top: 3rem;
+      margin-bottom: 3rem;
+      padding-bottom: auto;
+      padding: 3rem;
+      margin-left: 20vw;
+      margin-right: 20vw;
+      font-size: large;
+      box-shadow: 1rem 1rem 1rem rgba(0, 0, 0, 0.05);
+
+}
+
+.hero {
+      position: relative;
+      text-align: center;
+}
+
+.heroimages {
+
+      width: 100%;
+      animation-name: heroSlider;
+      animation: heroSlider 60s infinite linear;
+
+}
+
+.heroimage.active {
+      opacity: 1;
+}
+
+.hometext {
+
+      font-size: x-large;
+      margin: 10%;
+
+}
+
+#aktiviteter_title {
+
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+
+}
+
+.todo {
+
+      margin-left: 1rem;
+
+}
+
+.activityedit {
+
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+      gap: 1rem;
+
+}
+
+.editknapp {
+
+      text-decoration: none;
+      color: black;
+
+}
+
+.editknapp:hover {
+
+      color: blue;
+
+}
+
+.anmälan {
+
+      display: flex;
+      flex-direction: row;
+
+}
+.anmälanknapp{
+
+      padding: 1rem;
+      font-size: large;
+      width: 6rem;
+      text-align: center;
+
+}
+
+.kommerknapp {
+
+      background-color: rgb(77, 255, 77);
+
+}
+
+.kommerknapp:hover {
+
+      background-color: rgb(157, 255, 157);
+
+}
+
+.frånvarandeknapp {
+
+      background-color: rgb(255, 77, 77);
+
+}
+
+.frånvarandeknapp:hover {
+
+      background-color: rgb(255, 157, 157);
+
+}
+
+.statuses {
+
+      width: 90%;
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 1rem;
+
+}
+
+.statustitles { 
+      display: flex; 
+      flex-direction: row; 
+      justify-content: space-around;
+      background-color: rgb(247, 247, 247); 
+      font-size: large;
+}
+
+.statustitle { 
+      padding-top: 1rem; 
+      padding-bottom: 1rem;
+      display: flex;
+      flex-direction: column; 
+}
+
+.listor { 
+      display: grid;
+      grid-template-columns: auto auto auto;
+}
+
+.list {
+
+}
+
+.listtext {
+
+      padding-left: 2rem;
+      color: rgb(100, 100, 100);
+      margin-left: auto;
+
+}
+
+.kommerlist {
+
+      background-color: rgb(251, 251, 251);
+
+}
+
+.frånvarandelist {
+
+      background-color: rgb(243, 243, 243);
+      color: rgb(80, 80, 80); 
+
+}
+
+.kalladlist {
+
+      background-color: rgb(251, 251, 251);
 
 }
 
 footer {
 
+      margin-top: auto;
+      justify-self: end;
       background-color: grey;
       padding: 2rem;
+
+}
+
+@keyframes heroSlider {
+
+      0% {
+            content: url('mountainbike.webp');
+      }
+
+      25% {
+            content: url('orientering.webp');
+      }
+
+      50% {
+            content: url('tempocykling-1.webp');
+      }
+
+      75% {
+            content: url('kanot-1.webp');
+      }
+
+      100% {
+            content: url('fotboll-1.webp');
+      }
 
 }
