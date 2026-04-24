@@ -3,17 +3,20 @@ require 'slim'
 require 'sqlite3'
 require 'sinatra/reloader'
 require 'bcrypt'
+require_relative 'model.rb'
+
+include Model
+
 
 enable :sessions
 @loginfail = false
 
 before() do
-  db = SQLite3::Database.new('db/databas.db')
-  db.results_as_hash = true
 
   if (session[:user_id] !=  nil)
-    session[:username] = db.execute("SELECT name FROM aktiva WHERE id = ?", session[:user_id]).first #User.get(id) 
-    session[:user_info] = db.execute("SELECT * FROM aktiva WHERE id = ?", session[:user_id]).first
+    session[:user_info] = get_user_info_by_id(session[:user_id])
+    session[:username] = session[:user_info]['name']
+    
     @trainer_status = session[:user_info]['trainer']
     p @trainer_status
     if @trainer_status == 1
@@ -45,28 +48,18 @@ get('/login') do
 end
 
 post('/login') do
-  db = SQLite3::Database.new('db/databas.db')
-  db.results_as_hash = true
-
   username = params[:username]
   password = params[:password]
-  p username
-  p password
 
-  @user = db.execute("SELECT * FROM aktiva WHERE name = ?", username).first
-  begin
-    if @user && BCrypt::Password.new(@user["password"]) == password
-      p "Inloggad!"
-      session[:loginfail] = false
-      session[:user_id] = @user["id"]
-      redirect('/user/aktiviteter')
-    else #lägg till cooldown för inloggning
-      p "Wrong username or password"
-      session[:loginfail] = true
-      p @loginfail
-      redirect('/login')
-    end
-  rescue BCrypt::Errors::InvalidHash
+  user = authenticate_user(username, password)
+
+  if user
+    p "Inloggad!"
+    session[:loginfail] = false
+    session[:user_id] = user["id"]
+    redirect('/user/aktiviteter')
+  else
+    p "Wrong username or password"
     session[:loginfail] = true
     redirect('/login')
   end
@@ -75,11 +68,7 @@ end
 
 get('/user/aktiviteter') do
 
-  db = SQLite3::Database.new('db/databas.db')
-
-  db.results_as_hash = true
-
-  @aktiviteter = db.execute("SELECT * FROM aktiviteter")
+  @aktiviteter = aktiviteter_info()
 
   @trainer_status = session[:user_info]['trainer']
 
@@ -90,27 +79,9 @@ get('/user/aktiviteter') do
   @aktiviteter.each do |aktivitet|
     id = aktivitet["id"]
 
-    @kallade_per_aktivitet[id] = db.execute('
-                                            SELECT aktiva.name
-                                            FROM relation
-                                            JOIN aktiva ON relation.aktiv_id = aktiva.id
-                                            WHERE relation.status = "kallad"
-                                            AND relation.aktivitet_id = ?
-                                          ', id)
-    @frånvarande_per_aktivitet[id] = db.execute('
-                                            SELECT aktiva.name
-                                            FROM relation
-                                            JOIN aktiva ON relation.aktiv_id = aktiva.id
-                                            WHERE relation.status = "frånvarande"
-                                            AND relation.aktivitet_id = ?
-                                          ', id)
-    @kommer_per_aktivitet[id] = db.execute('
-                                            SELECT aktiva.name
-                                            FROM relation
-                                            JOIN aktiva ON relation.aktiv_id = aktiva.id
-                                            WHERE relation.status = "kommer"
-                                            AND relation.aktivitet_id = ?
-                                          ', id)
+    @kallade_per_aktivitet[id] = get_called_names_by_id(id)
+    @frånvarande_per_aktivitet[id] = get_abscents_names_by_id(id)
+    @kommer_per_aktivitet[id] = get_coming_names_by_id(id)
   end
 
   slim(:aktiviteter)
@@ -123,22 +94,16 @@ end
 
 get("/user/aktiviteter/:id/edit") do
 
-  db = SQLite3::Database.new('db/databas.db')
-  db.results_as_hash = true
   id = params[:id].to_i
-  @special_aktivitet = db.execute("SELECT * FROM aktiviteter WHERE id = ?", id).first
+  @special_aktivitet = get_activity_info_by_id(id)
 
   slim(:edit)
 
 end
 
 get('/user/profil') do
-
-  db = SQLite3::Database.new('db/databas.db')
-  db.results_as_hash = true
   username = session[:username]['name']
-  @user_info = db.execute("SELECT * FROM aktiva WHERE name = ?", username).first
-  p (@user_info)
+  @user_info = get_active_info_by_name(username)
 
   slim(:profil)
 
@@ -151,27 +116,17 @@ get('/user/login/passwordchange') do
 end
 
 post('/user/login/passwordchange') do
-  db = SQLite3::Database.new('db/databas.db')
-  db.results_as_hash = true
-
   username = params[:username]
   password = params[:password]
-  p username
-  p password
 
-  @user = db.execute("SELECT * FROM aktiva WHERE name = ?", username).first
-  begin
-    if @user && BCrypt::Password.new(@user["password"]) == password
-      p "Inloggad!"
-      session[:loginfail] = false
-      redirect('/user/changepassword')
-    else #lägg till cooldown för inloggning
-      p "Wrong username or password"
-      session[:loginfail] = true
-      p @loginfail
-      redirect('/user/login/passwordchange')
-    end
-  rescue BCrypt::Errors::InvalidHash
+  user = authenticate_user(username, password)
+
+  if user
+    p "Inloggad!"
+    session[:loginfail] = false
+    redirect('/user/changepassword')
+  else
+    p "Wrong username or password"
     session[:loginfail] = true
     redirect('/user/login/passwordchange')
   end
@@ -193,8 +148,7 @@ post('/user/changepassword') do
   end
   hashed_password = BCrypt::Password.create(password)
 
-  db = SQLite3::Database.new('db/databas.db')
-  db.execute("UPDATE aktiva SET password =? WHERE name =?",[hashed_password, session[:username]['name']])
+  change_password(hashed_password, session[:username])
 
   redirect("/user/profil")
 end
@@ -223,19 +177,14 @@ post("/userskapa") do
 
   hashed_password = BCrypt::Password.create(password)
 
-  db = SQLite3::Database.new('db/databas.db')
-  db.results_as_hash = true
-  db.execute("INSERT INTO aktiva (name, password, trainer) VALUES (?,?,?)",[username, hashed_password, trainer])
+  create_user(username, hashed_password, trainer)
 
   aktiv_id = db.last_insert_row_id
 
-  aktiviteter = db.execute("SELECT id FROM aktiviteter")
+  aktiviteter = get_actvity_ids()
 
   aktiviteter.each do |aktivitet|
-    db.execute(
-      "INSERT INTO relation (aktiv_id, aktivitet_id) VALUES (?,?)",
-      [aktiv_id, aktivitet["id"]]
-    )
+    update_relation(aktiv_id, aktivitet["id"])
   end
 
   redirect("/user/aktiviteter")
@@ -248,8 +197,7 @@ post("/user/aktiviteter/:id/update") do
   name = params[:name]
   description = params[:description]
 
-  db = SQLite3::Database.new('db/databas.db')
-  db.execute("UPDATE aktiviteter SET name=?, description=? WHERE id=?",[name,description,id])
+  update_activity_by_id(name,description,id)
 
   redirect("/user/aktiviteter")
 
@@ -258,40 +206,28 @@ end
 post("/user/aktiviteter/:id/delete") do
 
   id = params[:id].to_i
-  db = SQLite3::Database.new('db/databas.db')
 
-  db.execute("DELETE FROM aktiviteter WHERE id = ?", id)
+  delete_activity_by_id(id)
 
   redirect("/user/aktiviteter")
 end
 
 post('/user/createaktivitet') do
-  db = SQLite3::Database.new('db/databas.db')
-  db.results_as_hash = true
 
   name = params[:new_aktivitet]
   description = params[:description]
-  
-  db.execute("INSERT INTO aktiviteter (name, description) VALUES (?,?)", [name, description])
+
+  create_activity()
 
   aktivitet_id = db.last_insert_row_id
 
-  aktiva = db.execute("SELECT id FROM aktiva")
+  aktiva = get_ids_from_actives()
 
   aktiva.each do |aktiv|
-    db.execute(
-      "INSERT INTO relation (aktiv_id, aktivitet_id) VALUES (?,?)",
-      [aktiv["id"], aktivitet_id]
-    )
+    update_relation(aktiv["id"], aktivitet_id)
   end
 
-  @kallade = db.execute('
-                        SELECT aktiva.name
-                        FROM relation
-                        JOIN aktiva ON relation.aktiv_id = aktiva.id
-                        WHERE relation.status = "kallad"
-                        AND relation.aktivitet_id = ?
-                      ', aktivitet_id)
+  @kallade = get_called_names_by_id(aktivitet_id)
 
   redirect("/user/aktiviteter")
 
@@ -304,11 +240,7 @@ post("/user/aktiviteter/:id/changenärvaro") do
   aktiv_id = session[:user_id]
   p aktiv_id
 
-  db = SQLite3::Database.new('db/databas.db' )
-  db.execute(
-    "UPDATE relation SET status = ? WHERE aktiv_id = ? AND aktivitet_id = ?",
-    [status, aktiv_id, id]
-  )
+  change_attendence(status, aktiv_id, id)
 
   redirect("/user/aktiviteter")
 
