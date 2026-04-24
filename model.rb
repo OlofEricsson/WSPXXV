@@ -5,8 +5,8 @@ module Model
   def get_user_info_by_id(id)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-    db.execute("SELECT * FROM aktiva WHERE id = ?", id).first
-    db
+    data = db.execute("SELECT * FROM aktiva WHERE id = ?", id).first
+    return data
   end
 
   def authenticate_user(username, password)
@@ -89,14 +89,12 @@ module Model
   def create_user(username, hashed_password, trainer)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-
     db.execute("INSERT INTO aktiva (name, password, trainer) VALUES (?,?,?)",[username, hashed_password, trainer])
   end
 
   def get_actvity_ids()
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-
     db.execute("SELECT id FROM aktiviteter")
   end
 
@@ -123,7 +121,7 @@ module Model
     db.execute("DELETE FROM aktiviteter WHERE id = ?", id)
   end
 
-  def create_activity()
+  def create_activity(name, description)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
     db.execute("INSERT INTO aktiviteter (name, description) VALUES (?,?)", [name, description])
