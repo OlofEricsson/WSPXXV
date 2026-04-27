@@ -46,7 +46,7 @@ class User < BaseModel
   # def self.create(username, hashed_password, trainer)
   #   db = SQLite3::Database.new('db/databas.db')
   #   db.results_as_hash = true
-  #   db.execute("INSERT INTO aktiva (name, password, trainer) VALUES (?,?,?)",[username, hashed_password, trainer])
+  #   db.execute("INSERT INTO aktiva (name, password, trainer) VALUES (?,?,?) RETURNING (id)",[username, hashed_password, trainer])
   # end
 
   # def self.get_all_ids()
