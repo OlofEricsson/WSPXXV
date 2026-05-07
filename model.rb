@@ -10,8 +10,8 @@ module Model
   def get_user_info_by_id(id)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-    db.execute("SELECT * FROM aktiva WHERE id = ?", id).first
-    db
+    data = db.execute("SELECT * FROM aktiva WHERE id = ?", id).first
+    return data
   end
 
     # Autentiserar en användare genom att kontrollera användarnamn och lösenord.
@@ -133,7 +133,6 @@ module Model
   def create_user(username, hashed_password, trainer)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-
     db.execute("INSERT INTO aktiva (name, password, trainer) VALUES (?,?,?)",[username, hashed_password, trainer])
   end
 
@@ -143,7 +142,6 @@ module Model
   def get_actvity_ids()
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-
     db.execute("SELECT id FROM aktiviteter")
   end
 
