@@ -15,12 +15,12 @@ html lang="en"
             input type="submit" value="Logga in"
         - else
           section class="menu-button"
-            h1 class="user material-icons" #{session[:username]['name'] + @trainer} ☰
+            h1 class="user material-icons" #{session[:username] + @trainer} ☰
 
         nav class="menu"
           hr
-          a href="/user/aktiviteter" class="navbar"Aktiviteter
-          a href="/user/profil" class="navbar"Profil
+          a href="/user/activities" class="navbar"Aktiviteter
+          a href="/user/profile" class="navbar"Profil
           a href="" class="navbar"inställningar
           a href="/logout" class="navbar"Logga ut
       hr

@@ -19,9 +19,12 @@ before() do
 
   if (session[:user_id] !=  nil)
     session[:user_info] = get_user_info_by_id(session[:user_id])
+    p session[:user_info]
     session[:username] = session[:user_info]['name']
-    
-    @trainer_status = session[:user_info]['trainer']
+    session[:trainer] = session[:user_info]['trainer']
+    p session[:trainer]
+
+    @trainer_status = session[:trainer]
     p @trainer_status
     if @trainer_status == 1
       @trainer = "✅"
@@ -73,11 +76,13 @@ post('/login') do
   user = authenticate_user(username, password)
 
   if user
-    p "Inloggad!"
+    p "Logged in!"
     session[:loginfail] = false
     session[:user_id] = user["id"]
-    redirect('/user/aktiviteter')
+    redirect('/user/activities')
   else
+    sleep 1
+
     p "Wrong username or password"
     session[:loginfail] = true
     redirect('/login')
@@ -89,7 +94,7 @@ end
 # Hämtar även vilka som är kallade, frånvarande och kommer.
 #
 # @return [Slim Template] Renderar aktivitetsvyn.
-get('/user/aktiviteter') do
+get('/user/activities') do
 
   @aktiviteter = aktiviteter_info()
 
@@ -107,38 +112,44 @@ get('/user/aktiviteter') do
     @kommer_per_aktivitet[id] = get_coming_names_by_id(id)
   end
 
-  slim(:aktiviteter)
+  slim(:activities)
 
 end
 
 # Visar formuläret för att skapa aktivitet.
 #
 # @return [Slim Template] Renderar skapa-sidan.
-get('/user/createaktivitet') do
-  slim(:skapa)
+get('/user/create-activity') do
+  if session[:trainer] = 1
+    slim(:create)
+  else
+    redirect('/user/activities')
+  end
 end
 
 # Visar formuläret för att redigera en aktivitet.
 #
 # @param id [Integer] Aktivitetens ID.
 # @return [Slim Template] Renderar edit-sidan.
-get("/user/aktiviteter/:id/edit") do
-
-  id = params[:id].to_i
-  @special_aktivitet = get_activity_info_by_id(id)
-
-  slim(:edit)
-
+get("/user/activities/:id/edit") do
+  if session[:trainer] = 1
+    id = params[:id].to_i
+    @special_aktivitet = get_activity_info_by_id(id)
+    slim(:edit)
+  else
+    redirect('/user/activities')
+  end
 end
 
 # Visar användarens profil.
 #
 # @return [Slim Template] Renderar profilsidan.
-get('/user/profil') do
-  username = session[:username]['name']
+get('/user/profile') do
+  username = session[:username]
+  p username
   @user_info = get_active_info_by_name(username)
 
-  slim(:profil)
+  slim(:profile)
 
 end
 
@@ -146,7 +157,7 @@ end
 # Visar sidan för verifiering innan lösenordsbyte.
 #
 # @return [Slim Template] Renderar passwordchange-sidan.
-get('/user/login/passwordchange') do
+get('/user/login/password-change') do
   @loginfail = session[:loginfail]
   session[:loginfail] = nil
   slim(:passwordchange)
@@ -155,27 +166,27 @@ end
 # Verifierar användaren innan lösenordsbyte.
 #
 # @return [Redirect] Redirectar vidare till lösenordsändring eller tillbaka
-post('/user/login/passwordchange') do
+post('/user/login/password-change') do
   username = params[:username]
   password = params[:password]
 
   user = authenticate_user(username, password)
 
   if user
-    p "Inloggad!"
+    p "Logged in!"
     session[:loginfail] = false
-    redirect('/user/changepassword')
+    redirect('/user/change-password')
   else
     p "Wrong username or password"
     session[:loginfail] = true
-    redirect('/user/login/passwordchange')
+    redirect('/user/login/password-change')
   end
 end
 
 # Visar formuläret för att byta lösenord.
 #
 # @return [Slim Template] Renderar changepassword-sidan.
-get('/user/changepassword') do
+get('/user/change-password') do
   @confirmfail = session[:confirmnotsame]
   session[:confirmnotsame] = nil
   slim(:changepassword)
@@ -186,7 +197,7 @@ end
 # Kontrollerar att lösenordsbekräftelsen matchar.
 #
 # @return [Redirect] Redirectar till profilsidan.
-post('/user/changepassword') do
+post('/user/change-password') do
   password = params[:password]
 
   if password != params[:passwordconfirmation]
@@ -198,7 +209,7 @@ post('/user/changepassword') do
 
   change_password(hashed_password, session[:username])
 
-  redirect("/user/profil")
+  redirect("/user/profile")
 end
 
 # Loggar ut användaren.
@@ -226,7 +237,7 @@ end
 # Skapar även relationer mellan användaren och alla aktiviteter.
 #
 # @return [Redirect] Redirectar till aktivitetslistan.
-post("/userskapa") do 
+post("/user-create") do 
 
   username = params[:username]
   password = params[:password]
@@ -248,7 +259,7 @@ post("/userskapa") do
     update_relation(aktiv_id, aktivitet["id"])
   end
 
-  redirect("/user/aktiviteter")
+  redirect("/user/activities")
 
 end
 
@@ -256,29 +267,31 @@ end
 #
 # @param id [Integer] Aktivitetens ID.
 # @return [Redirect] Redirectar tillbaka till aktiviteter.
-post("/user/aktiviteter/:id/update") do
+post("/user/activities/:id/update") do
+  if session[:trainer] = 1
+    id = params[:id].to_i
+    name = params[:name]
+    description = params[:description]
 
-  id = params[:id].to_i
-  name = params[:name]
-  description = params[:description]
-
-  update_activity_by_id(name,description,id)
-
-  redirect("/user/aktiviteter")
-
+    update_activity_by_id(name,description,id)
+    redirect('/user/activities')
+  else
+    redirect('/user/activities')
+  end
 end
 
 # Tar bort en aktivitet.
 #
 # @param id [Integer] Aktivitetens ID.
 # @return [Redirect] Redirectar tillbaka till aktiviteter.
-post("/user/aktiviteter/:id/delete") do
-
-  id = params[:id].to_i
-
-  delete_activity_by_id(id)
-
-  redirect("/user/aktiviteter")
+post("/user/activities/:id/delete") do
+  if session[:trainer] = 1
+    id = params[:id].to_i
+    delete_activity_by_id(id)
+    redirect('/user/activities')
+  else
+    redirect('/user/activities')
+  end
 end
 
 # Skapar en ny aktivitet.
@@ -286,24 +299,26 @@ end
 # Skapar även relationer mellan aktiviteten och alla användare.
 #
 # @return [Redirect] Redirectar tillbaka till aktiviteter.
-post('/user/createaktivitet') do
+post('/user/create-activity') do
 
-  name = params[:new_aktivitet]
-  description = params[:description]
+  if session[:trainer] = 1
+    name = params[:new_aktivitet]
+    description = params[:description]
 
-  create_activity()
+    aktivitet_id = create_activity(name, description)
 
-  aktivitet_id = db.last_insert_row_id
+    aktiva = get_ids_from_actives()
 
-  aktiva = get_ids_from_actives()
+    aktiva.each do |aktiv|
+      update_relation(aktiv["id"], aktivitet_id)
+    end
 
-  aktiva.each do |aktiv|
-    update_relation(aktiv["id"], aktivitet_id)
+    @kallade = get_called_names_by_id(aktivitet_id)
+
+    redirect("/user/activities")
+  else
+    redirect('/user/activities')
   end
-
-  @kallade = get_called_names_by_id(aktivitet_id)
-
-  redirect("/user/aktiviteter")
 
 end
 
@@ -311,7 +326,7 @@ end
 #
 # @param id [Integer] Aktivitetens ID.
 # @return [Redirect] Redirectar tillbaka till aktiviteter.
-post("/user/aktiviteter/:id/changenärvaro") do
+post("/user/activities/:id/changenärvaro") do
 
   id = params[:id].to_i
   status = params[:status]
@@ -320,6 +335,6 @@ post("/user/aktiviteter/:id/changenärvaro") do
 
   change_attendence(status, aktiv_id, id)
 
-  redirect("/user/aktiviteter")
+  redirect("/user/activities")
 
 end

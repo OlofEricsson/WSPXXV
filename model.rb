@@ -10,15 +10,15 @@ module Model
   def get_user_info_by_id(id)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-    db.execute("SELECT * FROM aktiva WHERE id = ?", id).first
-    db
+    user = db.execute("SELECT * FROM aktiva WHERE id = ?", id).first
+    return user
   end
 
-    # Autentiserar en användare genom att kontrollera användarnamn och lösenord.
-    #
-    # @param username [String] Användarens namn.
-    # @param password [String] Lösenord i klartext.
-    # @return [Hash, nil] Användarens data om inloggningen lyckas, annars nil.
+  # Autentiserar en användare genom att kontrollera användarnamn och lösenord.
+  #
+  # @param username [String] Användarens namn.
+  # @param password [String] Lösenord i klartext.
+  # @return [Hash, nil] Användarens data om inloggningen lyckas, annars nil.
   def authenticate_user(username, password)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
@@ -44,7 +44,8 @@ module Model
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
 
-    db.execute("SELECT * FROM aktiviteter")
+    activities = db.execute("SELECT * FROM aktiviteter")
+    activities
   end
 
   # Hämtar namn på alla aktiva som är kallade till en aktivitet.
@@ -54,13 +55,14 @@ module Model
   def get_called_names_by_id(id)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-    db.execute('
+    actives = db.execute('
       SELECT aktiva.name
       FROM relation
       JOIN aktiva ON relation.aktiv_id = aktiva.id
       WHERE relation.status = "kallad"
       AND relation.aktivitet_id = ?
       ', id)
+    actives
   end
 
   # Hämtar namn på alla frånvarande personer för en aktivitet.
@@ -70,13 +72,14 @@ module Model
   def get_abscents_names_by_id(id)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-    db.execute('
+    names = db.execute('
       SELECT aktiva.name
       FROM relation
       JOIN aktiva ON relation.aktiv_id = aktiva.id
       WHERE relation.status = "frånvarande"
       AND relation.aktivitet_id = ?
       ', id)
+    names
   end
 
   # Hämtar namn på alla personer som kommer till en aktivitet.
@@ -86,13 +89,14 @@ module Model
   def get_coming_names_by_id(id)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-    db.execute('
+    names = db.execute('
       SELECT aktiva.name
       FROM relation
       JOIN aktiva ON relation.aktiv_id = aktiva.id
       WHERE relation.status = "kommer"
       AND relation.aktivitet_id = ?
       ', id)
+    names
   end
 
   # Hämtar information om en aktivitet baserat på ID.
@@ -102,7 +106,8 @@ module Model
   def get_activity_info_by_id(id)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-    db.execute("SELECT * FROM aktiviteter WHERE id = ?", id).first
+    info = db.execute("SELECT * FROM aktiviteter WHERE id = ?", id).first
+    info
   end
 
   # Hämtar information om en aktiv användare baserat på användarnamn.
@@ -112,7 +117,8 @@ module Model
   def get_active_info_by_name(username)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-    db.execute("SELECT * FROM aktiva WHERE name = ?", username).first
+    info = db.execute("SELECT * FROM aktiva WHERE name = ?", username).first
+    info
   end
 
   # Uppdaterar lösenordet för en användare.
@@ -121,6 +127,8 @@ module Model
   # @param username [String] Användarnamnet vars lösenord ska ändras.
   # @return [void]
   def change_password(hashed_password, username)
+    db = SQLite3::Database.new('db/databas.db')
+    db.results_as_hash = true
     db.execute("UPDATE aktiva SET password =? WHERE name =?",[hashed_password, username])
   end
 
@@ -143,8 +151,8 @@ module Model
   def get_actvity_ids()
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-
-    db.execute("SELECT id FROM aktiviteter")
+    ids = db.execute("SELECT id FROM aktiviteter")
+    ids 
   end
 
   # Skapar en relation mellan en aktiv och en aktivitet.
@@ -190,10 +198,11 @@ module Model
   # @note Denna metod verkar sakna parametrarna name och description.
   #
   # @return [void]
-  def create_activity()
+  def create_activity(name, description)
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
     db.execute("INSERT INTO aktiviteter (name, description) VALUES (?,?)", [name, description])
+    db.last_insert_row_id
   end
 
   # Hämtar ID för alla aktiva användare.
@@ -202,7 +211,8 @@ module Model
   def get_ids_from_actives()
     db = SQLite3::Database.new('db/databas.db')
     db.results_as_hash = true
-    db.execute("SELECT id FROM aktiva")
+    ids = db.execute("SELECT id FROM aktiva")
+    ids
   end
 
   # Uppdaterar närvarostatus för en aktiv person i en aktivitet.

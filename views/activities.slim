@@ -1,7 +1,7 @@
 section id="aktiviteter_title"
       h1 style="margin: 0px;" Kommande aktiviteter
       - if @trainer_status == 1
-            a href="/user/createaktivitet" 
+            a href="/user/create-activity" 
                   img src="/plus.svg" style="width: 2rem; height: 2rem;"
             
 hr
@@ -14,21 +14,18 @@ section class="aktivitetercontainer"
                   h2 #{aktivitet["name"]}
                   p #{aktivitet["description"]}
 
-                  /form action="/todos/#{todo["id"]}/done" method="post"
-                        input type="submit" value="✅ done"/
-
                   - if @trainer_status == 1
                         section class="activityedit"
-                              form action="/user/aktiviteter/#{aktivitet["id"]}/delete" method="post"
+                              form action="/user/activities/#{aktivitet["id"]}/delete" method="post"
                                     input type="submit" value="ta bort"
 
-                              a class="editknapp" href="/user/aktiviteter/#{aktivitet["id"]}/edit" edit🖊️
+                              a class="editknapp" href="/user/activities/#{aktivitet["id"]}/edit" edit🖊️
 
                   section class="statuses"
                         section class="anmälan"
-                              form class="anmälanknapp kommerknapp" action="/user/aktiviteter/#{aktivitet["id"]}/changenärvaro" method="post"
+                              form class="anmälanknapp kommerknapp" action="/user/activities/#{aktivitet["id"]}/changenärvaro" method="post"
                                     input type="submit" name="status" value="kommer"
-                              form class="anmälanknapp frånvarandeknapp" action="/user/aktiviteter/#{aktivitet["id"]}/changenärvaro" method="post"
+                              form class="anmälanknapp frånvarandeknapp" action="/user/activities/#{aktivitet["id"]}/changenärvaro" method="post"
                                     input type="submit" name="status" value="frånvarande"
 
                   
