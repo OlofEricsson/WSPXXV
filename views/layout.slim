@@ -15,7 +15,7 @@ html lang="en"
             input type="submit" value="Logga in"
         - else
           section class="menu-button"
-            h1 class="user material-icons" #{session[:username] + @trainer} ☰
+            h1 class="user material-icons" #{session[:username]['name'] + @trainer} ☰
 
         nav class="menu"
           hr
