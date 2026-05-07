@@ -11,6 +11,10 @@ include Model
 enable :sessions
 @loginfail = false
 
+# Körs före varje request.
+#
+# Hämtar användarinformation om användaren är inloggad
+# och sparar information i sessionen samt sätter tränarstatus.
 before() do
 
   if (session[:user_id] !=  nil)
@@ -29,6 +33,9 @@ before() do
   end
 end
 
+# Skyddar alla routes under /user/.
+#
+# Om användaren inte är inloggad skickas användaren vidare till errorsidan.
 before('/user/*') do
   if (session[:user_id] ==  nil)
     session[:error] = "You need to log in to see this"
@@ -36,17 +43,29 @@ before('/user/*') do
   end
 end
 
+# Startsida.
+#
+# @return [Slim Template] Renderar startsidan.
 get('/') do
   @loginfail = false
   slim(:home)
 end
 
+# Visar login-sidan.
+#
+# @return [Slim Template] Renderar login-formuläret.
 get('/login') do
   @loginfail = session[:loginfail]
   session[:loginfail] = nil
   slim(:login)
 end
 
+# Hanterar inloggning.
+#
+# Kontrollerar användarnamn och lösenord.
+# Vid lyckad inloggning sparas användar-ID i sessionen.
+#
+# @return [Redirect] Redirectar till aktiviteter eller tillbaka till login.
 post('/login') do
   username = params[:username]
   password = params[:password]
@@ -65,7 +84,11 @@ post('/login') do
   end
 end
 
-
+# Visar alla aktiviteter för användaren.
+#
+# Hämtar även vilka som är kallade, frånvarande och kommer.
+#
+# @return [Slim Template] Renderar aktivitetsvyn.
 get('/user/aktiviteter') do
 
   @aktiviteter = aktiviteter_info()
@@ -88,10 +111,17 @@ get('/user/aktiviteter') do
 
 end
 
+# Visar formuläret för att skapa aktivitet.
+#
+# @return [Slim Template] Renderar skapa-sidan.
 get('/user/createaktivitet') do
   slim(:skapa)
 end
 
+# Visar formuläret för att redigera en aktivitet.
+#
+# @param id [Integer] Aktivitetens ID.
+# @return [Slim Template] Renderar edit-sidan.
 get("/user/aktiviteter/:id/edit") do
 
   id = params[:id].to_i
@@ -101,6 +131,9 @@ get("/user/aktiviteter/:id/edit") do
 
 end
 
+# Visar användarens profil.
+#
+# @return [Slim Template] Renderar profilsidan.
 get('/user/profil') do
   username = session[:username]['name']
   @user_info = get_active_info_by_name(username)
@@ -109,12 +142,19 @@ get('/user/profil') do
 
 end
 
+
+# Visar sidan för verifiering innan lösenordsbyte.
+#
+# @return [Slim Template] Renderar passwordchange-sidan.
 get('/user/login/passwordchange') do
   @loginfail = session[:loginfail]
   session[:loginfail] = nil
   slim(:passwordchange)
 end
 
+# Verifierar användaren innan lösenordsbyte.
+#
+# @return [Redirect] Redirectar vidare till lösenordsändring eller tillbaka
 post('/user/login/passwordchange') do
   username = params[:username]
   password = params[:password]
@@ -132,12 +172,20 @@ post('/user/login/passwordchange') do
   end
 end
 
+# Visar formuläret för att byta lösenord.
+#
+# @return [Slim Template] Renderar changepassword-sidan.
 get('/user/changepassword') do
   @confirmfail = session[:confirmnotsame]
   session[:confirmnotsame] = nil
   slim(:changepassword)
 end
 
+# Byter användarens lösenord.
+#
+# Kontrollerar att lösenordsbekräftelsen matchar.
+#
+# @return [Redirect] Redirectar till profilsidan.
 post('/user/changepassword') do
   password = params[:password]
 
@@ -153,11 +201,19 @@ post('/user/changepassword') do
   redirect("/user/profil")
 end
 
+# Loggar ut användaren.
+#
+# Tömmer sessionen och skickar tillbaka till startsidan.
+#
+# @return [Redirect]
 get('/logout') do
   session.clear
   redirect('/')
 end
 
+# Visar errorsidan.
+#
+# @return [Slim Template] Renderar error-sidan.
 get('/error') do
   @error = session[:error]
   session[:error] = 'nil'
@@ -165,6 +221,11 @@ get('/error') do
   slim(:error)
 end
 
+# Skapar en ny användare.
+#
+# Skapar även relationer mellan användaren och alla aktiviteter.
+#
+# @return [Redirect] Redirectar till aktivitetslistan.
 post("/userskapa") do 
 
   username = params[:username]
@@ -191,6 +252,10 @@ post("/userskapa") do
 
 end
 
+# Uppdaterar en aktivitet.
+#
+# @param id [Integer] Aktivitetens ID.
+# @return [Redirect] Redirectar tillbaka till aktiviteter.
 post("/user/aktiviteter/:id/update") do
 
   id = params[:id].to_i
@@ -203,6 +268,10 @@ post("/user/aktiviteter/:id/update") do
 
 end
 
+# Tar bort en aktivitet.
+#
+# @param id [Integer] Aktivitetens ID.
+# @return [Redirect] Redirectar tillbaka till aktiviteter.
 post("/user/aktiviteter/:id/delete") do
 
   id = params[:id].to_i
@@ -212,6 +281,11 @@ post("/user/aktiviteter/:id/delete") do
   redirect("/user/aktiviteter")
 end
 
+# Skapar en ny aktivitet.
+#
+# Skapar även relationer mellan aktiviteten och alla användare.
+#
+# @return [Redirect] Redirectar tillbaka till aktiviteter.
 post('/user/createaktivitet') do
 
   name = params[:new_aktivitet]
@@ -233,6 +307,10 @@ post('/user/createaktivitet') do
 
 end
 
+# Uppdaterar användarens närvarostatus för en aktivitet.
+#
+# @param id [Integer] Aktivitetens ID.
+# @return [Redirect] Redirectar tillbaka till aktiviteter.
 post("/user/aktiviteter/:id/changenärvaro") do
 
   id = params[:id].to_i
